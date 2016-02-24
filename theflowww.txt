@@ -1,0 +1,146 @@
+#include "theflowww.h"
+
+struct flowNetwork * initFlowNetwork(){
+    //initialize iterate variable, and dynamically initialize a pointer to flowNetwork structure
+    int i;
+    struct flowNetwork * newNetwork = (struct flowNetwork *)malloc(sizeof(struct flowNetwork));
+    
+    //initialize the adjMatrix structure in the flowNetwork structure using initAdjMatrix();
+    newNetwork->adjMatrix = initAdjMatrix();
+    
+    //iterate over i till NODES
+    for(i = 0; i < NODES; i++){
+        //set the elements of the visitNodes and parent to -1
+        newNetwork->visitedNodes[i] = 0;
+        newNetwork->parent[i] = -1;
+    }
+    
+    
+    //return pointer to the flowNetwork structure
+    return newNetwork;
+    
+}
+
+void deleteFlowNetwork(struct flowNetwork * fN){
+    //free memory allocated by the the adjMatrix sturture element
+    deleteAdjMatrix(fN->adjMatrix);
+    
+    //free the flowNetwork structure
+    free(fN);
+}
+
+int breadthFirstPathSearch(struct flowNetwork * fN, int s, int t){
+    //initializing two Data structures, Queue structure pointer, and initializing the Queue
+    struct Data node, temp;
+    
+    //assigning values to vectex member of the node Data structure (this is the first node visited)
+    node.vertex = s;
+    struct Queue * breadthPath;
+    initQueue(&breadthPath);
+    
+    //initializing integer to iterate over later
+    int i;
+    
+    //iterating over i till NODES and setting all elements in visitedNodes to 0
+    for (i = 0; i < NODES; i++) {
+        fN->visitedNodes[i] = 0;
+    }
+    
+    //enqueing the first node into the new queue
+    enqueue(breadthPath, node);
+    
+    //iterating over the queue while it is not empty
+    while (isQueueEmpty(breadthPath) != 1) {
+        
+        //dequeueing the first node
+        dequeue(breadthPath, &node);
+        
+        //iterating over i till NODES
+        for (i = 0; i < NODES; i++) {
+            
+            //ensuring that we haven't been to this node before and that this node actually has a flow cap
+            if (fN->adjMatrix[node.vertex][i].flowCap != 0 && fN->visitedNodes[i] == 0) {
+                
+                //making sure that node is not saturuated (i.e. the flowCap is more than the current flow)
+                if (fN->adjMatrix[node.vertex][i].flowCap - fN->adjMatrix[node.vertex][i].flow > 0) {
+                    
+                    //setting the parent of the visited node as the dequeued node
+                    fN->parent[i] = node.vertex;
+                    
+                    //setting that we visited the node already
+                    fN->visitedNodes[i] = 1;
+                    
+                    //assigning a value for the vertex member of the temp Data structure
+                    temp.vertex = i;
+                    
+                    //enqueueing the temp Data structure
+                    enqueue(breadthPath, temp);
+                    
+                }
+            }
+        }
+        
+    }
+    
+    free(breadthPath);
+    
+    //if we have been to the destination node before return 1
+    if (fN->visitedNodes[t] == 1) {
+        return 1;
+    }
+    
+    //else return 0
+    return 0;
+}
+
+void maximizeFlowNetwork(struct flowNetwork * fN, int s, int t){
+    
+    //initializing/assigning integers required for function
+    int addToPath = INF;
+    int currentVertex = t;
+    int newFlow, maxFlow, currentFlow;
+    
+    //while a path in the network is not operating at maximum flow
+    while (breadthFirstPathSearch(fN, s, t) == 1) {
+        
+        //we want to find the maximum flow we can add to the path
+        //iterate over the adjMatrix till we get to the source vertex
+        while (currentVertex != s){
+            
+            //assign values to maxFlow and currentFlow
+            maxFlow = fN->adjMatrix[fN->parent[currentVertex]][currentVertex].flowCap;
+            currentFlow = fN->adjMatrix[fN->parent[currentVertex]][currentVertex].flow;
+        
+            //if the difference between maxFlow and currentFlow is less when the current
+            //addToPath, it should be the new flow that we should add
+            if (addToPath > maxFlow - currentFlow) {
+                addToPath = maxFlow - currentFlow;
+            }
+            
+            //the currentVertex is the now parent as we move back towards the source vertex
+            currentVertex = fN->parent[currentVertex];
+        }
+        
+        //setting the source back to the destination
+        currentVertex = t;
+        
+        while (currentVertex != s) {
+            
+            //calcuating the newFlow to be added to the edge  (current + addtoPath)
+            newFlow =  fN->adjMatrix[fN->parent[currentVertex]][currentVertex].flow + addToPath;
+            
+            //add newFlow to edge
+            insertAdjMatrix(fN->adjMatrix, fN->parent[currentVertex], currentVertex, newFlow, fN->adjMatrix[fN->parent[currentVertex]][currentVertex].flowCap);
+            
+            //the currentVertex is the now parent as we move back towards the source vertex
+            currentVertex = fN->parent[currentVertex];
+        }
+        
+        //setting the source back to the destination
+        currentVertex = t;
+        
+        //setting the addToPath back to INF so we can compute the new flow that needs to be added
+        addToPath = INF;
+    }
+    
+}

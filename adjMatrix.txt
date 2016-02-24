@@ -1,0 +1,69 @@
+#include "theflowww.h"
+
+struct Edge ** initAdjMatrix(){
+
+	//initialize newMatrix structure with NODES Edge single pointers
+	struct Edge ** newMatrix = (struct Edge **)malloc(sizeof(struct Edge *) * NODES);
+
+	//initialize two iteration integers
+	int i, j;
+
+	//iterate over i till NODES
+	for(i = 0; i < NODES; i++){
+		//for each ith single Edge * we allocated memory for NODES Edge structure
+		newMatrix[i] = (struct Edge *)malloc(sizeof(struct Edge) * NODES);
+        //iterate over j till NODES
+		for(j = 0; j < NODES; j++){
+            //set the ith jth member of newMatrix's flow and flowCap integers to 0
+			newMatrix[i][j].flow = 0;
+			newMatrix[i][j].flowCap = 0; 
+		} 
+	}
+    
+    //return newMatrix
+	return newMatrix; 	
+
+}
+
+void insertAdjMatrix(struct Edge ** aM, int vi, int vj, int flow, int flowCap){
+
+    //assign values to the ith jth member of aM flow and flowCap integers
+	aM[vi][vj].flow = flow; 
+	aM[vi][vj].flowCap = flowCap;
+
+}
+
+void deleteAdjMatrix(struct Edge ** aM){
+	
+    //initialize iteration variable
+	int i;
+    
+    //iterate over i till NODES
+	for(i = 0; i < NODES; i++){
+        
+        //free all the ith members of the matrix aM
+		free(aM[i]);
+	}
+    
+    //free aM
+	free(aM);
+}
+
+void printAdjMat(struct Edge ** aM){
+    
+    //initialize i and j as iteration variables
+	int i, j;
+    
+    //iterate over i and j till NODES
+	for(i = 0; i < NODES; i++){
+		for(j = 0; j < NODES; j++){
+            //if the flowCap integer of the ith jth member of aM is greater than 0
+			if(aM[i][j].flowCap > 0){
+                //print statement
+				printf("Edge: (%d, %d) Flow: %d Max Cap: %d \n", i, j, aM[i][j].flow, aM[i][j].flowCap);
+			}
+		}
+        
+	}
+
+}
